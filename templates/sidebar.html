@@ -1,0 +1,25 @@
+<aside class="sidebar">
+    <a class="sidebar-brand" href="{{ url_for('index') }}">
+        <span class="sidebar-brand-mark">H</span>
+        <span>Helper</span>
+    </a>
+    <nav class="sidebar-nav" aria-label="Основная навигация">
+        <a class="sidebar-link {{ 'active' if active_nav == 'cards' else '' }}" href="{{ url_for('index') }}">
+            <span class="sidebar-icon">▦</span>
+            <span>Карточки</span>
+        </a>
+        <a class="sidebar-link {{ 'active' if active_nav == 'notes' else '' }}" href="{{ url_for('notes') }}">
+            <span class="sidebar-icon">✎</span>
+            <span>Заметки</span>
+        </a>
+        <a class="sidebar-link {{ 'active' if active_nav == 'news' else '' }}" href="{{ url_for('news') }}">
+            <span class="sidebar-icon">▤</span>
+            <span>Новости</span>
+        </a>
+        <span class="sidebar-link disabled" aria-disabled="true">
+            <span class="sidebar-icon">ⓘ</span>
+            <span>Полезная информация</span>
+        </span>
+    </nav>
+    <div class="sidebar-footer">Личная база знаний комании 1С-Рарус</div>
+</aside>

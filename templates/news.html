@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Новости — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'news' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+        <header class="topbar">
+            <div class="mobile-menu-label">Новости</div>
+            <div class="topbar-spacer"></div>
+            <div class="topbar-actions">
+                <span class="user-name">{{ session.get('username') }}</span>
+                <form method="post" action="{{ url_for('logout') }}">
+                    <button class="button ghost" type="submit">Выйти</button>
+                </form>
+            </div>
+        </header>
+        <main class="container">
+            <div class="page-heading">
+                <div>
+                    <h1>Новости</h1>
+                    <p class="muted">Обновления и важная информация</p>
+                </div>
+                {% if is_admin %}
+                    <a class="button primary" href="{{ url_for('add_news') }}">＋ Добавить</a>
+                {% endif %}
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            {% if news_items %}
+                <section class="news-list">
+                    {% for item in news_items %}
+                        <article class="news-card" tabindex="0" role="button"
+                            data-news-modal
+                            data-news-title="{{ item.title }}"
+                            data-news-date="{{ item.created_at|datetime_ru }}"
+                            data-news-short="{{ item.short_description }}"
+                            data-news-content="{{ item.content|e }}">
+                            <div class="news-card-date">{{ item.created_at|datetime_ru }}</div>
+                            <h2>{{ item.title }}</h2>
+                            <p class="news-short">{{ item.short_description }}</p>
+                            <div class="news-preview rich-output">{{ item.content|safe }}</div>
+                            {% if is_admin %}
+                                <a class="button secondary news-edit" href="{{ url_for('edit_news', news_id=item.id) }}">Редактировать</a>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </section>
+            {% else %}
+                <section class="empty-state">
+                    <div class="empty-icon">▤</div>
+                    <h2>Новостей пока нет</h2>
+                    <p class="muted">Здесь будут появляться важные обновления.</p>
+                </section>
+            {% endif %}
+        </main>
+        {% if news_items %}
+            <div class="modal-backdrop" data-news-backdrop hidden>
+                <section class="card-modal news-modal" role="dialog" aria-modal="true" aria-labelledby="news-modal-title">
+                    <button class="modal-close" type="button" data-news-close aria-label="Закрыть">×</button>
+                    <div class="news-card-date" data-news-modal-date></div>
+                    <h2 id="news-modal-title" data-news-modal-title></h2>
+                    <p class="news-short" data-news-modal-short></p>
+                    <div class="modal-description" data-news-modal-content></div>
+                    <button class="button secondary" type="button" data-news-close>Закрыть</button>
+                </section>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

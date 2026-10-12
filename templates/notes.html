@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Заметки — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'notes' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+        <header class="topbar">
+            <div class="mobile-menu-label">Заметки</div>
+            <div class="topbar-spacer"></div>
+            <div class="topbar-actions">
+                <span class="user-name">{{ session.get('username') }}</span>
+                <form method="post" action="{{ url_for('logout') }}">
+                    <button class="button ghost" type="submit">Выйти</button>
+                </form>
+            </div>
+        </header>
+        <main class="container">
+            <div class="page-heading">
+                <div>
+                    <h1>Заметки</h1>
+                    <p class="muted">Ваши личные заметки</p>
+                </div>
+                <a class="button primary" href="{{ url_for('add_note') }}">＋ Добавить заметку</a>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            {% if notes %}
+                <section class="card-grid">
+                    {% for note in notes %}
+                        <article class="data-card" tabindex="0" role="button"
+                            data-card-modal
+                            data-card-id="{{ note.id }}"
+                            data-card-number-label="Заметка"
+                            data-card-name="{{ note.title }}"
+                            data-card-section="Личные заметки"
+                            data-card-short-description="{{ note.short_description }}"
+                            data-card-description="{{ note.description|e }}">
+                            <div class="card-accent"></div>
+                            <div class="card-content">
+                                <div class="card-meta">Личная заметка</div>
+                                <h2>{{ note.title }}</h2>
+                                <p class="short-description">{{ note.short_description }}</p>
+                                <div class="description rich-output">{{ note.description|safe }}</div>
+                                <div class="card-actions">
+                                    <a class="button secondary" href="{{ url_for('edit_note', note_id=note.id) }}">Редактировать</a>
+                                    <form method="post" action="{{ url_for('delete_note', note_id=note.id) }}" data-delete-form>
+                                        <button class="button danger" type="submit" data-delete-trigger data-card-name="{{ note.title }}">Удалить</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </section>
+            {% else %}
+                <section class="empty-state">
+                    <div class="empty-icon">✎</div>
+                    <h2>Заметок пока нет</h2>
+                    <p class="muted">Создайте первую личную заметку — она будет видна только вам.</p>
+                    <a class="button primary" href="{{ url_for('add_note') }}">Добавить заметку</a>
+                </section>
+            {% endif %}
+        </main>
+        {% if notes %}
+            <div class="modal-backdrop" data-modal-backdrop hidden>
+                <section class="card-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                    <button class="modal-close" type="button" data-modal-close aria-label="Закрыть">×</button>
+                    <div class="modal-heading">
+                        <div class="card-meta" data-modal-section></div>
+                        <div class="modal-card-number" data-modal-card-number></div>
+                    </div>
+                    <h2 id="modal-title" data-modal-name></h2>
+                    <p class="modal-short-description" data-modal-short-description></p>
+                    <div class="modal-description" data-modal-description></div>
+                    <button class="button secondary" type="button" data-modal-close>Закрыть</button>
+                </section>
+            </div>
+            <div class="modal-backdrop" data-delete-backdrop hidden>
+                <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-note-title">
+                    <h2 id="delete-note-title">Удалить заметку?</h2>
+                    <p class="muted">Заметка «<strong data-delete-name></strong>» будет удалена. Это действие нельзя отменить.</p>
+                    <div class="form-actions">
+                        <button class="button secondary" type="button" data-delete-cancel>Отмена</button>
+                        <button class="button danger" type="button" data-delete-confirm>Удалить</button>
+                    </div>
+                </section>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

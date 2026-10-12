@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Предложка — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'cards' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('index') }}">База карточек</a>
+        <div class="topbar-actions">
+            <a class="button ghost" href="{{ url_for('index') }}">К базе</a>
+            <a class="button secondary" href="{{ url_for('proposals') }}">Предложка</a>
+            <span class="user-name">{{ session.get('username') }}</span>
+            <form method="post" action="{{ url_for('logout') }}">
+                <button class="button ghost" type="submit">Выйти</button>
+            </form>
+        </div>
+    </header>
+    <main class="container">
+        <div class="page-heading">
+            <div>
+                <h1>Предложка</h1>
+                <p class="muted">Карточки пользователей на рассмотрении</p>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% if proposals %}
+            <section class="proposal-list">
+                {% for proposal in proposals %}
+                    <article class="proposal-item">
+                        <div>
+                            <div class="card-meta">#{{ proposal.id }} · от {{ proposal.submitted_by }}</div>
+                            <h2>{{ proposal.name }}</h2>
+                            <p class="short-description">{{ proposal.short_description }}</p>
+                            <div class="description rich-output">{{ proposal.description|safe }}</div>
+                            <span class="proposal-section">{{ proposal.section }}</span>
+                        </div>
+                        <div class="proposal-actions">
+                            <a class="button secondary" href="{{ url_for('edit_proposal', proposal_id=proposal.id) }}">Редактировать</a>
+                            <form method="post" action="{{ url_for('accept_proposal', proposal_id=proposal.id) }}" data-decision-form data-decision="принять" data-proposal-name="{{ proposal.name }}">
+                                <button class="button success" type="submit">Принять</button>
+                            </form>
+                            <form method="post" action="{{ url_for('reject_proposal', proposal_id=proposal.id) }}" data-decision-form data-decision="отклонить" data-proposal-name="{{ proposal.name }}">
+                                <button class="button danger" type="submit">Отклонить</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty-state">
+                <div class="empty-icon">✓</div>
+                <h2>Предложений пока нет</h2>
+                <p class="muted">Новые предложения пользователей появятся здесь.</p>
+            </section>
+        {% endif %}
+    </main>
+    <div class="modal-backdrop" data-decision-backdrop hidden>
+        <section class="confirm-modal" role="dialog" aria-modal="true">
+            <h2 data-decision-title></h2>
+            <p class="muted">Карточка «<strong data-decision-name></strong>» будет обработана.</p>
+            <div class="form-actions">
+                <button class="button secondary" type="button" data-decision-cancel>Отмена</button>
+                <button class="button primary" type="button" data-decision-confirm>Подтвердить</button>
+            </div>
+        </section>
+    </div>
+    </div>
+</body>
+</html>

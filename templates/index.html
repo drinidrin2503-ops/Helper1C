@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ section if section else 'Разделы' }} — База данных</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'cards' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('index') }}">Поиск</a>
+        <form class="search-form" method="get" action="{{ url_for('index') }}">
+            <label class="search-field search-main">
+                <span class="sr-only">Поиск по наименованию и краткому описанию</span>
+                <input type="search" name="q" value="{{ search_query|default('') }}"
+                    placeholder="Наименование или краткое описание">
+            </label>
+            <label class="search-field search-id">
+                <span class="hash-prefix">#</span>
+                <span class="sr-only">Номер карточки</span>
+                <input type="search" name="card_id" value="{{ search_card_id|default('') }}"
+                    inputmode="numeric" pattern="[0-9]*" placeholder="Номер">
+            </label>
+            <button class="button primary search-button" type="submit">Поиск</button>
+        </form>
+        <div class="topbar-actions">
+            {% if is_admin %}
+                <a class="button secondary" href="{{ url_for('proposals') }}">Предложка</a>
+            {% else %}
+                <a class="button secondary" href="{{ url_for('favorites') }}">Избранное</a>
+            {% endif %}
+            <span class="user-name">{{ session.get('username') }}</span>
+            <form method="post" action="{{ url_for('logout') }}">
+                <button class="button ghost" type="submit">Выйти</button>
+            </form>
+        </div>
+    </header>
+    <main class="container">
+        <div class="page-heading">
+            <div>
+                <div class="section-title-row">
+                    <h1 tabindex="-1">
+                        {% if section_search_active %}{{ section }}{% elif search_active %}Результаты поиска{% else %}{{ section if section else 'Основные разделы' }}{% endif %}
+                    </h1>
+                    {% if section %}
+                        <div class="section-search" data-section-search tabindex="-1">
+                            <button class="button secondary section-search-toggle" type="button" data-section-search-open aria-expanded="{{ 'true' if section_search_active else 'false' }}">
+                                Поиск по разделу
+                            </button>
+                            <form class="section-search-form {{ 'is-open' if section_search_active else '' }}" method="get" action="{{ url_for('section_cards', section=section) }}">
+                                <label class="search-field section-search-main">
+                                    <span class="sr-only">Поиск по наименованию и краткому описанию в разделе</span>
+                                    <input type="search" name="q" value="{{ section_search_query|default('') }}"
+                                        placeholder="Наименование или краткое описание">
+                                </label>
+                                <label class="search-field section-search-id">
+                                    <span class="hash-prefix">#</span>
+                                    <span class="sr-only">Номер карточки в разделе</span>
+                                    <input type="search" name="card_id" value="{{ section_search_card_id|default('') }}"
+                                        inputmode="numeric" pattern="[0-9]*" placeholder="Номер">
+                                </label>
+                                <button class="button primary search-button" type="submit">Поиск</button>
+                                <button class="button ghost section-search-close" type="button" data-section-search-close aria-label="Закрыть поиск">×</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+                <p class="muted">
+                    {% if section_search_active %}
+                        Найдено карточек в разделе: {{ cards|length }}
+                    {% elif search_active %}
+                        Найдено карточек: {{ cards|length }}
+                    {% elif section %}Карточки выбранного раздела{% else %}Выберите тематику{% endif %}
+                </p>
+            </div>
+            <div class="heading-actions">
+                {% if section_search_active %}
+                    <a class="button secondary" href="{{ url_for('section_cards', section=section) }}">Сбросить поиск</a>
+                {% elif search_active %}
+                    <a class="button secondary" href="{{ url_for('index') }}">Сбросить поиск</a>
+                {% endif %}
+                {% if is_admin %}
+                    <div class="admin-actions-stack">
+                        <a class="button primary" href="{{ url_for('add_card') }}">＋ Добавить</a>
+                        <a class="button secondary" href="{{ url_for('add_section') }}">Добавить раздел</a>
+                        <a class="button secondary" href="{{ url_for('import_cards') }}">Загрузить из файла</a>
+                    </div>
+                {% else %}
+                    <button class="button primary" type="button" data-proposal-open>＋ Предложить</button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% if search_active and cards %}
+            <section class="card-grid">
+                {% for card in cards %}
+                    <article class="data-card" tabindex="0" role="button"
+                        data-card-modal
+                        data-card-id="{{ card.id }}"
+                        data-card-name="{{ card.name }}"
+                        data-card-section="{{ card.section }}"
+                        data-card-short-description="{{ card.short_description }}"
+                        data-card-description="{{ card.description|e }}"
+                        {% if not is_admin %}
+                            data-card-favorite-action="{{ url_for('toggle_favorite', card_id=card.id) }}"
+                            data-card-is-favorite="{{ 'true' if card.id in favorite_ids else 'false' }}"
+                        {% endif %}>
+                        <div class="card-accent"></div>
+                        <div class="card-content">
+                            <div class="card-meta">{{ card.section }} · #{{ card.id }}</div>
+                            <h2>{{ card.name }}</h2>
+                            <p class="short-description">{{ card.short_description }}</p>
+                            <div class="description rich-output">{{ card.description|safe }}</div>
+                            {% if is_admin %}
+                                <div class="card-actions">
+                                    <a class="button secondary" href="{{ url_for('edit_card', card_id=card.id) }}">Редактировать</a>
+                                    <form method="post" action="{{ url_for('delete_card', card_id=card.id) }}" data-delete-form>
+                                        <button class="button danger" type="submit" data-delete-trigger data-card-name="{{ card.name }}">Удалить</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% elif search_active %}
+            <section class="empty-state">
+                <div class="empty-icon">⌕</div>
+                <h2>Ничего не найдено</h2>
+                <p class="muted">Попробуйте изменить текст или номер карточки.</p>
+                <a class="button secondary" href="{{ url_for('index') }}">Сбросить поиск</a>
+            </section>
+        {% elif section and cards %}
+            <section class="card-grid">
+                {% for card in cards %}
+                    <article class="data-card" tabindex="0" role="button"
+                        data-card-modal
+                        data-card-id="{{ card.id }}"
+                        data-card-name="{{ card.name }}"
+                        data-card-section="{{ card.section }}"
+                        data-card-short-description="{{ card.short_description }}"
+                        data-card-description="{{ card.description|e }}"
+                        {% if not is_admin %}
+                            data-card-favorite-action="{{ url_for('toggle_favorite', card_id=card.id) }}"
+                            data-card-is-favorite="{{ 'true' if card.id in favorite_ids else 'false' }}"
+                        {% endif %}>
+                        <div class="card-accent"></div>
+                        <div class="card-content">
+                            <div class="card-meta">{{ card.section }} · #{{ card.id }}</div>
+                            <h2>{{ card.name }}</h2>
+                            <p class="short-description">{{ card.short_description }}</p>
+                            <div class="description rich-output">{{ card.description|safe }}</div>
+                            {% if is_admin %}
+                                <div class="card-actions">
+                                    <a class="button secondary" href="{{ url_for('edit_card', card_id=card.id) }}">Редактировать</a>
+                                    <form method="post" action="{{ url_for('delete_card', card_id=card.id) }}" data-delete-form>
+                                        <button class="button danger" type="submit" data-delete-trigger data-card-name="{{ card.name }}">Удалить</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% elif section %}
+            <section class="empty-state">
+                <div class="empty-icon">＋</div>
+                <h2>Пока нет карточек</h2>
+                <p class="muted">Создайте первую запись, нажав кнопку «Добавить».</p>
+                {% if is_admin %}
+                    <a class="button primary" href="{{ url_for('add_card') }}">Добавить карточку</a>
+                {% else %}
+                    <button class="button primary" type="button" data-proposal-open>Предложить карточку</button>
+                {% endif %}
+            </section>
+        {% else %}
+            <section class="section-grid">
+                {% for item in sections %}
+                    <a class="section-card" href="{{ url_for('section_cards', section=item.name) }}">
+                        <div class="section-icon">{{ loop.index }}</div>
+                        <div>
+                            <h2>{{ item.name }}</h2>
+                            <p class="muted">{{ item.count }} карточек</p>
+                        </div>
+                        <span class="section-arrow">→</span>
+                    </a>
+                {% endfor %}
+            </section>
+        {% endif %}
+    </main>
+    </div>
+    {% if (section and cards) or (search_active and cards) %}
+        <div class="modal-backdrop" data-modal-backdrop hidden>
+            <div class="card-modal-layout" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <section class="card-modal">
+                    <button class="modal-close" type="button" data-modal-close aria-label="Закрыть">×</button>
+                    <div class="modal-heading">
+                        <div class="card-meta" data-modal-section></div>
+                        <div class="modal-card-number" data-modal-card-number></div>
+                        {% if not is_admin %}
+                            <form method="post" class="favorite-form modal-favorite-form" data-modal-favorite-form>
+                                <button class="star-button" type="submit" data-modal-favorite-button aria-label="Добавить в избранное" title="Добавить в избранное">★</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                    <h2 id="modal-title" data-modal-name></h2>
+                    <p class="modal-short-description" data-modal-short-description></p>
+                    {% if not is_admin %}
+                        <p class="favorite-status" data-modal-favorite-status role="status" aria-live="polite" hidden></p>
+                    {% endif %}
+                    <div class="modal-description" data-modal-description></div>
+                    <button class="button secondary" type="button" data-modal-close>Закрыть</button>
+                </section>
+                <aside class="comments-panel" aria-label="Комментарии">
+                    <h2 class="comments-title">Комментарии</h2>
+                    <div class="comments-list" data-comments-list aria-live="polite"></div>
+                    <p class="comments-status" data-comments-status role="status" aria-live="polite"></p>
+                    <form class="comment-form" data-comment-form>
+                        <label class="sr-only" for="card-comment-input">Ваш комментарий</label>
+                        <textarea id="card-comment-input" name="content" maxlength="2000" placeholder="Напишите комментарий..." required></textarea>
+                        <button class="button primary" type="submit">Отправить</button>
+                    </form>
+                </aside>
+            </div>
+        </div>
+    {% endif %}
+    {% if is_admin %}
+        <div class="modal-backdrop" data-delete-backdrop hidden>
+            <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+                <h2 id="delete-modal-title">Удалить карточку?</h2>
+                <p class="muted">Карточка «<strong data-delete-name></strong>» будет полностью удалена из базы данных. Это действие нельзя отменить.</p>
+                <div class="form-actions">
+                    <button class="button secondary" type="button" data-delete-cancel>Отмена</button>
+                    <button class="button danger" type="button" data-delete-confirm>Удалить</button>
+                </div>
+            </section>
+        </div>
+    {% endif %}
+    {% if not is_admin %}
+        <div class="modal-backdrop" data-proposal-backdrop hidden>
+            <section class="card-modal proposal-modal" role="dialog" aria-modal="true" aria-labelledby="proposal-title">
+                <button class="modal-close" type="button" data-proposal-close aria-label="Закрыть">×</button>
+                <h2 id="proposal-title">Предложить карточку</h2>
+                <p class="muted">Заполните поля, и предложение будет отправлено администратору.</p>
+                <form method="post" action="{{ url_for('add_proposal') }}" class="form" data-proposal-form>
+                    <label for="proposal-name">Наименование <span>*</span></label>
+                    <input id="proposal-name" name="name" type="text" required maxlength="200">
+                    <label for="proposal-section">Раздел <span>*</span></label>
+                    <select id="proposal-section" name="section" required>
+                        <option value="" selected disabled>Выберите раздел</option>
+                        {% for item in section_options %}
+                            <option value="{{ item }}">{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="proposal-short-description">Краткое описание <span>*</span></label>
+                    <input id="proposal-short-description" name="short_description" type="text" required maxlength="300">
+                    <label for="proposal-description">Описание <span>*</span></label>
+                    <div class="rich-editor" data-rich-editor>
+                        <div class="editor-toolbar">
+                            <button type="button" data-command="bold"><strong>B</strong></button>
+                            <button type="button" data-command="italic"><em>I</em></button>
+                            <button type="button" data-command="underline"><u>U</u></button>
+                            <button type="button" data-command="insertUnorderedList">• Список</button>
+                            <button type="button" data-command="insertOrderedList">1. Список</button>
+                            <button type="button" data-command="createLink">Ссылка</button>
+                            <label title="Цвет текста">A <input type="color" data-color-command="foreColor" value="#172033"></label>
+                            <label title="Цвет выделения">▰ <input type="color" data-color-command="hiliteColor" value="#fff3a3"></label>
+                        </div>
+                        <div class="editor-content" contenteditable="true" role="textbox" aria-multiline="true" data-rich-required></div>
+                        <textarea id="proposal-description" name="description" class="editor-value"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button class="button secondary" type="button" data-proposal-close>Отмена</button>
+                        <button class="button primary" type="submit">Предложить</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+        <div class="modal-backdrop" data-proposal-confirm-backdrop hidden>
+            <section class="confirm-modal" role="dialog" aria-modal="true">
+                <h2>Отправить предложение?</h2>
+                <p class="muted">После подтверждения карточка будет направлена администратору на рассмотрение.</p>
+                <div class="form-actions">
+                    <button class="button secondary" type="button" data-proposal-confirm-cancel>Отмена</button>
+                    <button class="button primary" type="button" data-proposal-confirm-submit>Предложить</button>
+                </div>
+            </section>
+        </div>
+    {% endif %}
+</body>
+</html>

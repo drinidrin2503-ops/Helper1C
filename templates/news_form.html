@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'news' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+        <header class="topbar">
+            <a class="brand" href="{{ url_for('news') }}">Новости</a>
+            <a class="button ghost" href="{{ url_for('news') }}">← К новостям</a>
+        </header>
+        <main class="form-container">
+            <div class="form-header">
+                <h1>{{ title }}</h1>
+                <p class="muted">Поля отмечены как обязательные</p>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="post" class="form panel">
+                <label for="title">Заголовок <span>*</span></label>
+                <input id="title" name="title" type="text" value="{{ news_item.title if news_item else '' }}" required maxlength="200">
+                <label for="short_description">Краткое описание <span>*</span></label>
+                <input id="short_description" name="short_description" type="text" value="{{ news_item.short_description if news_item else '' }}" required maxlength="300">
+                <label for="content">Текст новости <span>*</span></label>
+                <div class="rich-editor" data-rich-editor>
+                    <div class="editor-toolbar">
+                        <button type="button" data-command="bold"><strong>B</strong></button>
+                        <button type="button" data-command="italic"><em>I</em></button>
+                        <button type="button" data-command="underline"><u>U</u></button>
+                        <button type="button" data-command="insertUnorderedList">• Список</button>
+                        <button type="button" data-command="insertOrderedList">1. Список</button>
+                        <button type="button" data-command="createLink">Ссылка</button>
+                        <label title="Цвет текста">A <input type="color" data-color-command="foreColor" value="#172033"></label>
+                        <label title="Цвет выделения">▰ <input type="color" data-color-command="hiliteColor" value="#fff3a3"></label>
+                    </div>
+                    <div class="editor-content" contenteditable="true" role="textbox" aria-multiline="true" data-rich-required></div>
+                    <textarea id="content" name="content" class="editor-value">{{ news_item.content if news_item else '' }}</textarea>
+                </div>
+                <div class="form-actions">
+                    <a class="button secondary" href="{{ url_for('news') }}">Отмена</a>
+                    <button class="button primary" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Загрузить карточки — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'cards' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+        <header class="topbar">
+            <a class="brand" href="{{ url_for('index') }}">База карточек</a>
+            <a class="button ghost" href="{{ url_for('index') }}">← К разделам</a>
+        </header>
+        <main class="form-container">
+            <div class="form-header">
+                <h1>Загрузить карточки из Excel</h1>
+                <p class="muted">Выберите файл .xlsx, заполненный по шаблону. Максимальный размер — 10 МБ.</p>
+            </div>
+            <div class="import-instructions panel">
+                <h2>Формат файла</h2>
+                <p>В первой строке должны быть столбцы: <strong>Раздел</strong>, <strong>Наименование</strong>, <strong>Краткое описание</strong>, <strong>Описание</strong>.</p>
+                <p>Каждая следующая строка — одна карточка. Раздел должен уже существовать. Если хотя бы одна строка содержит ошибку, карточки из файла не добавляются.</p>
+                <a class="button secondary" href="{{ url_for('download_card_import_template') }}">Скачать шаблон .xlsx</a>
+            </div>
+            {% if errors %}
+                <div class="alert error import-errors" role="alert">
+                    <strong>Файл не импортирован. Исправьте ошибки и загрузите его снова:</strong>
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <form method="post" enctype="multipart/form-data" class="form panel import-form">
+                <label for="card-file">Файл Excel (.xlsx) <span>*</span></label>
+                <input id="card-file" name="file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+                <div class="form-actions">
+                    <a class="button secondary" href="{{ url_for('index') }}">Отмена</a>
+                    <button class="button primary" type="submit">Загрузить карточки</button>
+                </div>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'cards' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+        <header class="topbar">
+            <a class="brand" href="{{ url_for('index') }}">База карточек</a>
+            <a class="button ghost" href="{{ url_for('index') }}">← К разделам</a>
+        </header>
+        <main class="form-container">
+            <div class="form-header">
+                <h1>{{ title }}</h1>
+                <p class="muted">Новый раздел будет доступен всем пользователям и при создании карточек.</p>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <form method="post" class="form panel">
+                <label for="name">Название раздела <span>*</span></label>
+                <input id="name" name="name" type="text" value="{{ request.form.get('name', '') }}" required maxlength="100" autofocus>
+                <div class="form-actions">
+                    <a class="button secondary" href="{{ url_for('index') }}">Отмена</a>
+                    <button class="button primary" type="submit">Добавить раздел</button>
+                </div>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

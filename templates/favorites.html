@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Избранное — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'cards' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('index') }}">База карточек</a>
+        <div class="topbar-actions">
+            <a class="button ghost" href="{{ url_for('index') }}">К базе</a>
+            <a class="button secondary" href="{{ url_for('favorites') }}">Избранное</a>
+            <span class="user-name">{{ session.get('username') }}</span>
+            <form method="post" action="{{ url_for('logout') }}">
+                <button class="button ghost" type="submit">Выйти</button>
+            </form>
+        </div>
+    </header>
+    <main class="container">
+        <div class="page-heading">
+            <div>
+                <h1>Избранное</h1>
+                <p class="muted">Ваши сохраненные карточки</p>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% if cards %}
+            <section class="card-grid">
+                {% for card in cards %}
+                    <article class="data-card" tabindex="0" role="button"
+                        data-card-modal
+                        data-card-id="{{ card.id }}"
+                        data-card-name="{{ card.name }}"
+                        data-card-section="{{ card.section }}"
+                        data-card-short-description="{{ card.short_description }}"
+                        data-card-description="{{ card.description|e }}"
+                        data-card-favorite-action="{{ url_for('toggle_favorite', card_id=card.id) }}"
+                        data-card-is-favorite="true">
+                        <div class="card-accent"></div>
+                        <div class="card-content">
+                            <div class="card-meta">{{ card.section }} · #{{ card.id }}</div>
+                            <h2>{{ card.name }}</h2>
+                            <p class="short-description">{{ card.short_description }}</p>
+                            <div class="description rich-output">{{ card.description|safe }}</div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty-state">
+                <div class="empty-icon">★</div>
+                <h2>Избранное пока пусто</h2>
+                <p class="muted">Нажимайте на звездочку на карточках, чтобы сохранить их здесь.</p>
+                <a class="button primary" href="{{ url_for('index') }}">Перейти к карточкам</a>
+            </section>
+        {% endif %}
+    </main>
+    {% if cards %}
+        <div class="modal-backdrop" data-modal-backdrop hidden>
+            <div class="card-modal-layout" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <section class="card-modal">
+                    <button class="modal-close" type="button" data-modal-close aria-label="Закрыть">×</button>
+                    <div class="modal-heading">
+                        <div class="card-meta" data-modal-section></div>
+                        <div class="modal-card-number" data-modal-card-number></div>
+                        <form method="post" class="favorite-form modal-favorite-form" data-modal-favorite-form>
+                            <button class="star-button active" type="submit" data-modal-favorite-button aria-label="Убрать из избранного" title="Убрать из избранного">★</button>
+                        </form>
+                    </div>
+                    <h2 id="modal-title" data-modal-name></h2>
+                    <p class="modal-short-description" data-modal-short-description></p>
+                    <p class="favorite-status" data-modal-favorite-status role="status" aria-live="polite" hidden></p>
+                    <div class="modal-description" data-modal-description></div>
+                    <button class="button secondary" type="button" data-modal-close>Закрыть</button>
+                </section>
+                <aside class="comments-panel" aria-label="Комментарии">
+                    <h2 class="comments-title">Комментарии</h2>
+                    <div class="comments-list" data-comments-list aria-live="polite"></div>
+                    <p class="comments-status" data-comments-status role="status" aria-live="polite"></p>
+                    <form class="comment-form" data-comment-form>
+                        <label class="sr-only" for="card-comment-input">Ваш комментарий</label>
+                        <textarea id="card-comment-input" name="content" maxlength="2000" placeholder="Напишите комментарий..." required></textarea>
+                        <button class="button primary" type="submit">Отправить</button>
+                    </form>
+                </aside>
+            </div>
+        </div>
+    {% endif %}
+    </div>
+</body>
+</html>

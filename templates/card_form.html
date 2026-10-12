@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} — База карточек</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="authenticated-page">
+    {% set active_nav = 'cards' %}
+    {% include 'sidebar.html' %}
+    <div class="workspace">
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('index') }}">База карточек</a>
+        <a class="button ghost" href="{{ url_for('index') }}">← К списку</a>
+    </header>
+    <main class="form-container">
+        <div class="form-header">
+            <h1>{{ title }}</h1>
+            <p class="muted">Поля отмечены как обязательные</p>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        <form method="post" action="{{ form_action|default('') }}" class="form panel">
+            <label for="name">Наименование <span>*</span></label>
+            <input id="name" name="name" type="text" value="{{ card.name if card else '' }}" required maxlength="200">
+
+            <label for="section">Раздел <span>*</span></label>
+            <select id="section" name="section" required>
+                <option value="" disabled {{ 'selected' if not card else '' }}>Выберите раздел</option>
+                {% for item in sections %}
+                    <option value="{{ item }}" {{ 'selected' if card and card.section == item else '' }}>{{ item }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="short_description">Краткое описание <span>*</span></label>
+            <input id="short_description" name="short_description" type="text" value="{{ card.short_description if card else '' }}" required maxlength="300">
+
+            <label for="description">Описание <span>*</span></label>
+            <div class="rich-editor" data-rich-editor>
+                <div class="editor-toolbar">
+                    <button type="button" data-command="bold"><strong>B</strong></button>
+                    <button type="button" data-command="italic"><em>I</em></button>
+                    <button type="button" data-command="underline"><u>U</u></button>
+                    <button type="button" data-command="insertUnorderedList">• Список</button>
+                    <button type="button" data-command="insertOrderedList">1. Список</button>
+                    <button type="button" data-command="createLink">Ссылка</button>
+                    <label title="Цвет текста">A <input type="color" data-color-command="foreColor" value="#172033"></label>
+                    <label title="Цвет выделения">▰ <input type="color" data-color-command="hiliteColor" value="#fff3a3"></label>
+                </div>
+                <div class="editor-content" contenteditable="true" role="textbox" aria-multiline="true" data-rich-required></div>
+                <textarea id="description" name="description" class="editor-value">{{ card.description if card else '' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <a class="button secondary" href="{{ url_for('index') }}">Отмена</a>
+                <button class="button primary" type="submit">{{ form_submit_label|default('Сохранить') }}</button>
+            </div>
+        </form>
+    </main>
+    </div>
+</body>
+</html>

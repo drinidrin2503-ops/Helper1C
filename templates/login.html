@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход — Helper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <div class="brand-mark">H</div>
+        <h1>Helper</h1>
+        <p class="muted">Войдите, чтобы продолжить</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        <form method="post" class="form">
+            <label for="username">Логин</label>
+            <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+            <label for="password">Пароль</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <button class="button primary full-width" type="submit">Войти</button>
+        </form>
+        <a class="button secondary full-width auth-register" href="{{ url_for('register') }}">Зарегистрироваться</a>
+        <p class="hint">Демо-доступ: admin / admin123</p>
+    </main>
+</body>
+</html>
